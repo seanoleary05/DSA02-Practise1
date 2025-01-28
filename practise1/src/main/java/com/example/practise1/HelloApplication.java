@@ -5,15 +5,13 @@ import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.WritableImage;
+import javafx.scene.image.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.image.Image;
 
 import java.awt.*;
 import java.io.File;
@@ -26,6 +24,7 @@ public class HelloApplication extends Application {
     Button button;
     Label label = new Label();
     ImageView imageView = new ImageView();
+    ImageView imageView2 = new ImageView();
 
 
     public static void main(String[] args) {
@@ -51,7 +50,7 @@ public class HelloApplication extends Application {
             }
         });
         VBox root = new VBox(10);
-        root.getChildren().addAll(choiceBox, button, imageView);
+        root.getChildren().addAll(choiceBox, button, imageView, imageView2);
         Scene scene = new Scene(root, 700, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -78,44 +77,49 @@ public class HelloApplication extends Application {
                 }
 
             case "Open Image As Greyscale":
+                Label label = new Label();
+                FileChooser fileChooser2 = new FileChooser();
+                fileChooser2.setTitle("Open File");
+                fileChooser2.setInitialDirectory(new File("C:/"));
+                File file2 = fileChooser2.showOpenDialog(new Stage());
 
-        }
-    }
+                if (file2 != null) {
+                    label.setText(file2.getName());
+                    try {  // Important: Wrap in a try-catch for image loading errors
+                        Image image2 = new Image(file2.toURI().toString()); // Use toURI().toString() for better compatibility
+                        int width = (int) image2.getWidth();
+                        int height = (int) image2.getHeight();
 
-    public static Image toGreyScale(Image sourceImage) {
-        Label label = new Label();
-        FileChooser fileChooser2 = new FileChooser();
-        fileChooser2.setTitle("Open File");
-        fileChooser2.setInitialDirectory(new File("C:/"));
-        File file2 = fileChooser2.showOpenDialog(new Stage());
-        if (file2 != null) {
-            label.setText(file2.getName());
-            Image image1 = new Image(file2.getPath());
-            PixelReader pr = image1.getPixelReader();
-            int width = (int) image1.getWidth();
-            int height = (int) image1.getHeight();
-            WritableImage wImage1 = new WritableImage(width, height);
-                    /*Color c = pr.getColor(0,0);
-                    double r = c.getRed();
-                   */
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    int pixel = pr.getArgb(x, y);
+                        WritableImage wImage1 = new WritableImage(width, height);
+                        PixelReader pr = image2.getPixelReader();
+                        PixelWriter pw = wImage1.getPixelWriter();
+
+                        for (int y = 0; y < height; y++) {
+                            for (int x = 0; x < width; x++) {
+                                Color c = pr.getColor(x, y);
+                                double r = c.getRed();
+                                double g = c.getGreen();
+                                double b = c.getBlue();
+                                double grey = (r + g + b) / 3;
+                                Color nc = new Color(grey, grey, grey, 1.0);
+                                pw.setColor(x, y, nc); // Set the color for each pixel
+                            }
+                        }
+
+                        imageView2.setImage(wImage1);
+                        imageView2.setFitHeight(300);
+                        imageView2.setFitWidth(300);
 
 
-                    int argb = pr.getArgb(0, 0);
-                    int r = (argb >> 16) & 0xFF;
-                    int g = (argb >> 24) & 0xFF;
-                    int b = argb & 0xFF;
+                    } catch (Exception e) {
+                        // Handle potential image loading errors (e.g., file not found, invalid format)
+                        System.err.println("Error loading image: " + e.getMessage());
+                        // Optionally, display an error message to the user.
+                        label.setText("Error loading image"); // Or a more informative message
+                    }
 
-                    int grayLevel = (int) (0.2162 * r + 0.7152 * g + 0.0722 * b) / 3;
-                    int gray = (grayLevel << 16) + (grayLevel << 8);
 
-                    wImage1.getPixelWriter().setArgb(x, y, gray);
                 }
-
-            }
-            return wImage1;
         }
     }
 }
